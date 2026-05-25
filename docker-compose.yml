@@ -1,0 +1,18 @@
+services:
+  app:
+    build: .
+    ports:
+      - "3001:3001"
+    environment:
+      PORT: 3001
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+      GEMINI_PRIMARY_MODEL: ${GEMINI_PRIMARY_MODEL:-gemini-2.0-flash-preview-image-generation}
+      GEMINI_FALLBACK_MODEL: ${GEMINI_FALLBACK_MODEL:-gemini-2.0-flash-exp}
+      GEMINI_AGENT_MODEL: ${GEMINI_AGENT_MODEL:-gemini-2.0-flash}
+      GOOGLE_SERVICE_ACCOUNT_PATH: /app/service-account.json
+      DB_PATH: /app/data/jobs.db
+      RATE_LIMIT_MS: ${RATE_LIMIT_MS:-5000}
+    volumes:
+      - ./service-account.json:/app/service-account.json:ro
+      - ./data:/app/data
+    restart: unless-stopped

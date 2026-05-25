@@ -1,0 +1,1166 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "f7031503-b2a1-4e5e-ba1c-9eaa546e29b6",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [-320, -720],
+      "id": "67313927-5016-4d46-906b-25fb5ebadc48",
+      "name": "Webhook",
+      "webhookId": "f7031503-b2a1-4e5e-ba1c-9eaa546e29b6"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [1936, -688],
+      "id": "f9174261-91df-4cec-aa41-2ce3b810bd1f",
+      "name": "Merge Sources"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [3264, -688],
+      "id": "fbe347f8-e27b-4156-9e83-64f75b25b6b7",
+      "name": "Loop Over Items1"
+    },
+    {
+      "parameters": {
+        "resource": "image",
+        "operation": "edit",
+        "modelId": {
+          "__rl": true,
+          "value": "={{ $('Store Meta Data1').last().json.gemini_model }}",
+          "mode": "id"
+        },
+        "prompt": "=Current Locale:  {{ $('Store Meta Data1').last().json.current_language }} .\n\nTranslate all text on this image to {{ $('Store Meta Data1').last().json.current_language }} locale. Keep fonts, layout, colors, and all visual elements exactly the same. Only change the text language. Output the full localized image.\n\nIf the Current Locale is \"UA\" - Translate to Ukrainian.\nIf the Current Locale is \"EN\" - Copywrite content in English, does not repeat those that is used already on image.\n\nAdditional user comments: {{ $('Edit Fields1').last().json.comments || \" \" }}",
+        "images": {
+          "values": [
+            {
+              "binaryPropertyName": "image"
+            }
+          ]
+        },
+        "options": {
+          "binaryPropertyOutput": "data"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.1,
+      "position": [1104, 64],
+      "id": "945c3762-de9a-48a2-a236-d3c241a6897b",
+      "name": "Edit an image1",
+      "retryOnFail": true,
+      "waitBetweenTries": 1000,
+      "alwaysOutputData": false,
+      "credentials": {
+        "googlePalmApi": {
+          "id": "YHnQSKh4LFMnBtNu",
+          "name": "Kristina's Gis Shared Personal"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "content": "## Generate Localized Image & Upload it to Drive",
+        "height": 432,
+        "width": 1108
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [336, -128],
+      "typeVersion": 1,
+      "id": "bb1e1899-58d1-4757-a113-a3ca1d2423a5",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "9d43ab71-fe44-4aa0-a232-93a04359ae2c",
+              "name": "fileName",
+              "value": "={{ $binary.image.fileName.replace(/\\.[^.]+$/, '') }}",
+              "type": "string"
+            },
+            {
+              "id": "1303d8e4-d80d-4f1c-b82e-def8705ea206",
+              "name": "fileExtension",
+              "value": "={{ \".\" + $binary.image.fileExtension }}",
+              "type": "string"
+            },
+            {
+              "id": "167d4083-7975-4eb0-92e5-2aab01e89346",
+              "name": "current_language",
+              "value": "={{ $json.languages }}",
+              "type": "string"
+            },
+            {
+              "id": "ebf2a1a2-c47b-4ef7-b107-179f434ea037",
+              "name": "gemini_model",
+              "value": "models/gemini-3-pro-image-preview",
+              "type": "string"
+            },
+            {
+              "id": "e6b106f1-6c27-4377-8e43-50e2e739d072",
+              "name": "gpt_model",
+              "value": "gpt-image-1",
+              "type": "string"
+            },
+            {
+              "id": "f7f4b2fa-345a-458a-a78a-34002737a1da",
+              "name": "gemini_fallback_model",
+              "value": "models/gemini-3.1-flash-image-preview",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [496, 80],
+      "id": "48ee5530-3d3e-48ab-9322-a94a88568908",
+      "name": "Store Meta Data1",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $('Webhook Data').item.json.file }}",
+          "mode": "url"
+        },
+        "options": {
+          "binaryPropertyName": "image"
+        }
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [1344, -656],
+      "id": "bbc5b0d1-f0e4-4bb4-87c0-7f5c5ddd93a1",
+      "name": "Download file1",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "PFF1ji7rl8WMkqki",
+          "name": "Gis shared"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "languages",
+        "options": {
+          "includeBinary": true
+        }
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [2960, -784],
+      "id": "9883e08f-c58c-41c7-85dd-553bb306486c",
+      "name": "Split Out1"
+    },
+    {
+      "parameters": {
+        "inputDataFieldName": "=data",
+        "name": "={{ $('Store Meta Data1').last().json.fileName.replace(/_En_/i, '_' + $('Store Meta Data1').last().json.current_language.charAt(0).toUpperCase() + $('Store Meta Data1').last().json.current_language.slice(1).toLowerCase() + '_') }}",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "={{ $json['gd_folder-id'] }}",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [3776, 64],
+      "id": "0d609d62-7e27-4215-aff8-5a223e21b44a",
+      "name": "Google Drive - Upload Result1",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "PFF1ji7rl8WMkqki",
+          "name": "Gis shared"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "fileFolder",
+        "searchMethod": "query",
+        "queryString": "='{{ $('Save Parent Folder').item.json.parentFolder }}' in parents and mimeType contains 'image/' and trashed = false\n",
+        "returnAll": true,
+        "filter": {
+          "whatToSearch": "files"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [1216, -848],
+      "id": "79dd1c74-2682-4bcc-9ff9-857a00d80e81",
+      "name": "List Folder Images",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "PFF1ji7rl8WMkqki",
+          "name": "Gis shared"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "batchSize": 50,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [1456, -848],
+      "id": "ade4741e-1ed6-4576-9a5b-e8532da504f4",
+      "name": "Loop Over Images"
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $json.id }}",
+          "mode": "id"
+        },
+        "options": {
+          "binaryPropertyName": "image"
+        }
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [1696, -832],
+      "id": "3609bcee-15ce-4590-b1cf-99d089f29069",
+      "name": "Download Image",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "PFF1ji7rl8WMkqki",
+          "name": "Gis shared"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "cond-input-file",
+                    "leftValue": "={{ $('Webhook Data').item.json.inputType }}",
+                    "rightValue": "file",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "file"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "cond-input-folder",
+                    "leftValue": "={{ $('Webhook Data').item.json.inputType }}",
+                    "rightValue": "folder",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "folder"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [800, -720],
+      "id": "48f166c6-482a-44c4-be45-688e0d69b17c",
+      "name": "Route Input Type1"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [736, 80],
+      "id": "b8adea39-8bb7-4217-894e-620fb129b76e",
+      "name": "Wait 5s (Rate Limit)1",
+      "webhookId": "wait-rate-limit-static-loc-001"
+    },
+    {
+      "parameters": {
+        "chatId": "-1003769181873",
+        "text": "=❌❌❌ *Static Localization Failed*\n\nFILE: `{{ $('Store Meta Data1').last().json.fileName }}`\nLANG: `{{ $('Store Meta Data1').last().json.languages }}`\nMODEL: {{ $json.gemini_fallback_model }}\nERROR: `{{ $json.error }}`\n\nImage was skipped. Please retry manually.",
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "Markdown"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [3200, 640],
+      "id": "bf1d525f-5649-4328-89ac-56f2a4cdfcf8",
+      "name": "Telegram - Error Report1",
+      "webhookId": "0b344496-8663-4ffe-87f0-7387432023b8",
+      "credentials": {
+        "telegramApi": {
+          "id": "UfZSV9V4ln64hpNw",
+          "name": "Gis Image Localization"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [2720, -832],
+      "id": "22f1a97b-63d1-4698-a7b8-402d2651bb07",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e3bd5237-db2f-4bef-9419-697293d3c7aa",
+              "name": "languages",
+              "value": "={{ $('Webhook Data').item.json.languages }}",
+              "type": "array"
+            },
+            {
+              "id": "5a6b7c8d-9e0f-4a1b-8c2d-3e4f5a6b7c8d",
+              "name": "comments",
+              "value": "={{ $('Webhook Data').item.json.comments }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [2224, -832],
+      "id": "08585cc3-7b36-4a04-8d31-ec36aa57b2d9",
+      "name": "Edit Fields1"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [2128, 656],
+      "id": "59b12284-ee25-4005-8a07-e3d1a94a0711",
+      "name": "Wait",
+      "webhookId": "cc14d55e-d329-496f-81a1-3cda221fc01c"
+    },
+    {
+      "parameters": {
+        "content": "## Fallback Handling\n",
+        "height": 400,
+        "width": 2416,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [1360, 464],
+      "typeVersion": 1,
+      "id": "fdec7147-c6e4-472c-9ce6-1f07686b5eba",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "## Success Publishing to GD and AT",
+        "height": 448,
+        "width": 544,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [3600, -96],
+      "typeVersion": 1,
+      "id": "d5ba90d2-1e5b-4c02-ac41-043adee51be5",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [1824, 656],
+      "id": "462474d5-994c-4249-8459-50adbfb1b37c",
+      "name": "Merge2"
+    },
+    {
+      "parameters": {
+        "chatId": "-1003769181873",
+        "text": "=⚠️ *Static Localization Failed*\n\nFILE: `{{ $('Store Meta Data1').last().json.fileName }}`\nLANG: `{{ $('Store Meta Data1').last().json.languages }}`\nMODEL: {{ $json.gemini_model }}\nERROR: `{{ $json.error }}`\nFALLBACK: `{{ $json.gpt_model }}`\n\nTrying `{{ $json.gemini_fallback_model }}`...",
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "Markdown"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [2080, 480],
+      "id": "eadaa4a2-e0c2-46c3-8ce1-9ab8d5fd7764",
+      "name": "Telegram - Error Report",
+      "webhookId": "0b344496-8663-4ffe-87f0-7387432023b8",
+      "credentials": {
+        "telegramApi": {
+          "id": "UfZSV9V4ln64hpNw",
+          "name": "Gis Image Localization"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "url": "=https://www.googleapis.com/drive/v3/files/{{ $json.file.split('/d/')[1].split('/')[0]}}?fields=parents,name",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleDriveOAuth2Api",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [272, -720],
+      "id": "d15b4939-d50f-49a0-8017-b13c43858979",
+      "name": "Get File Info",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "PFF1ji7rl8WMkqki",
+          "name": "Gis shared"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "04df271b-ff7f-48bb-bc89-2101f1f51b80",
+              "name": "parentFolder",
+              "value": "={{ $('Webhook Data').item.json.inputType === \"file\" \n  ? $json.parents[0] \n  : $('Webhook Data').item.json.folder.split('/folders/')[1].split('?')[0] }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [512, -720],
+      "id": "472144b0-ae19-4b96-b3f6-7b9600897d4e",
+      "name": "Save Parent Folder"
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $input.first().json.body;\nconst parsed = typeof body === 'string' ? JSON.parse(body) : body;\nreturn [{ json: parsed }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [0, -720],
+      "id": "66263a74-9d8f-4abe-904f-39e040a3bca3",
+      "name": "Webhook Data"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [3440, 64],
+      "id": "7e8025f2-2dbd-4031-a41e-46415acc8d3b",
+      "name": "Merge1"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [3472, 640],
+      "id": "7d87ed23-d9eb-46fb-a7c7-dbb76bc467a1",
+      "name": "Wait1",
+      "webhookId": "086b08a9-fc5a-4cfd-bb2d-d3d8d0878910"
+    },
+    {
+      "parameters": {
+        "chatId": "-1003769181873",
+        "text": "=✅✅✅ Localization Cycle has finished!\n\n📁 Folder: https://drive.google.com/drive/folders/{{ $('Save Parent Folder').first().json.parentFolder }}\n\n🖼 Images total generated: {{ $json.data.length }}\n🌍 Locales: {{ $('Webhook Data').first().json.languages.join(', ') }}\n\nPls check if all images are localized correctly ✔️",
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "HTML"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [3792, -704],
+      "id": "9a5c2af0-0885-4e5a-be56-bafc46ac75ab",
+      "name": "Send Success Message1",
+      "webhookId": "ff5cd7ad-d6ee-46cd-aa93-380555fb8a52",
+      "credentials": {
+        "telegramApi": {
+          "id": "UfZSV9V4ln64hpNw",
+          "name": "Gis Image Localization"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "content": "## Image Localization System",
+        "height": 528,
+        "width": 4692,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [-528, -928],
+      "typeVersion": 1,
+      "id": "6f14d2bd-9f35-41db-a107-a89e902f1b5c",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "map-existing-001",
+              "name": "gd_folder-id",
+              "value": "={{ $json.id }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [2752, -336],
+      "id": "6a655b56-4fb4-404c-8c9c-7964119e1d8e",
+      "name": "Map Existing Folder ID"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "map-created-001",
+              "name": "gd_folder-id",
+              "value": "={{ $json.id }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [2976, -80],
+      "id": "5f311ac4-bb4c-4904-85e1-f4ca7a81898e",
+      "name": "Map Created Folder ID"
+    },
+    {
+      "parameters": {
+        "resource": "fileFolder",
+        "queryString": "={{ $('Store Meta Data1').last().json.current_language }}",
+        "returnAll": true,
+        "filter": {
+          "folderId": {
+            "__rl": true,
+            "value": "={{ $('Save Parent Folder').item.json.parentFolder }}",
+            "mode": "id"
+          },
+          "whatToSearch": "folders"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [2480, 144],
+      "id": "71810e60-bc0c-414e-b967-f40620ac85e7",
+      "name": "Search files and folders2",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "PFF1ji7rl8WMkqki",
+          "name": "Gis shared"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "cond-001",
+              "leftValue": "={{ $json.id}}",
+              "rightValue": 0,
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [2528, -224],
+      "id": "9439ccd1-0ba8-4a04-b17e-5492ecb3f52e",
+      "name": "Folder Exists?2"
+    },
+    {
+      "parameters": {
+        "resource": "folder",
+        "name": "={{ $('Store Meta Data1').last().json.current_language }}",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "={{ $('Save Parent Folder').item.json.parentFolder }}",
+          "mode": "id"
+        },
+        "options": {
+          "simplifyOutput": false
+        }
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [2752, -80],
+      "id": "de3635e3-0f40-4b4e-ad79-a633bd915eec",
+      "name": "Create folder3",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "PFF1ji7rl8WMkqki",
+          "name": "Gis shared"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "8674e710-1a97-4979-ad3d-eb399367474a",
+              "name": "gd_folder-id",
+              "value": "={{ $json['gd_folder-id'] }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [3200, -224],
+      "id": "0ea0129a-1364-405c-b943-dd2b4e9a6cdb",
+      "name": "Save Upload Folder1"
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [3552, -688],
+      "id": "b2f72212-7ec3-49ab-bbbb-f32a6a480d45",
+      "name": "Aggregate"
+    },
+    {
+      "parameters": {
+        "resource": "image",
+        "operation": "edit",
+        "modelId": {
+          "__rl": true,
+          "value": "={{ $('Store Meta Data1').last().json.gemini_fallback_model }}",
+          "mode": "id"
+        },
+        "prompt": "=Current Locale:  {{ $('Store Meta Data1').last().json.current_language }} .\n\nTranslate all text on this image to {{ $('Store Meta Data1').last().json.current_language }} locale. Keep fonts, layout, colors, and all visual elements exactly the same. Only change the text language. Output the full localized image.\n\nIf the Current Locale is \"UA\" - Translate to Ukrainian.\nIf the Current Locale is \"EN\" - Copywrite content in English, does not repeat those that is used already on image.\n\nAdditional user comments: {{ $('Edit Fields1').last().json.comments || \" \" }}",
+        "images": {
+          "values": [
+            {
+              "binaryPropertyName": "image"
+            }
+          ]
+        },
+        "options": {
+          "binaryPropertyOutput": "data"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.1,
+      "position": [2560, 560],
+      "id": "6baa949c-f42e-48ec-a0b1-06b32d732228",
+      "name": "Edit an image",
+      "retryOnFail": true,
+      "waitBetweenTries": 1000,
+      "alwaysOutputData": false,
+      "credentials": {
+        "googlePalmApi": {
+          "id": "YHnQSKh4LFMnBtNu",
+          "name": "Kristina's Gis Shared Personal"
+        }
+      },
+      "onError": "continueErrorOutput"
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Webhook Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Sources": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items1": {
+      "main": [
+        [
+          {
+            "node": "Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Store Meta Data1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit an image1": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Search files and folders2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Merge2",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Store Meta Data1": {
+      "main": [
+        [
+          {
+            "node": "Wait 5s (Rate Limit)1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download file1": {
+      "main": [
+        [
+          {
+            "node": "Merge Sources",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out1": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Drive - Upload Result1": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "List Folder Images": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Images",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Images": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Download Image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download Image": {
+      "main": [
+        [
+          {
+            "node": "Merge Sources",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Route Input Type1": {
+      "main": [
+        [
+          {
+            "node": "Download file1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "List Folder Images",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 5s (Rate Limit)1": {
+      "main": [
+        [
+          {
+            "node": "Merge2",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Edit an image1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram - Error Report1": {
+      "main": [
+        [
+          {
+            "node": "Wait1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Split Out1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Edit an image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge2": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Telegram - Error Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get File Info": {
+      "main": [
+        [
+          {
+            "node": "Save Parent Folder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Parent Folder": {
+      "main": [
+        [
+          {
+            "node": "Route Input Type1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook Data": {
+      "main": [
+        [
+          {
+            "node": "Get File Info",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge1": {
+      "main": [
+        [
+          {
+            "node": "Google Drive - Upload Result1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait1": {
+      "main": [
+        [
+          {
+            "node": "Edit an image1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Map Existing Folder ID": {
+      "main": [
+        [
+          {
+            "node": "Save Upload Folder1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Map Created Folder ID": {
+      "main": [
+        [
+          {
+            "node": "Save Upload Folder1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search files and folders2": {
+      "main": [
+        [
+          {
+            "node": "Folder Exists?2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Folder Exists?2": {
+      "main": [
+        [
+          {
+            "node": "Map Existing Folder ID",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create folder3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create folder3": {
+      "main": [
+        [
+          {
+            "node": "Map Created Folder ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Upload Folder1": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Aggregate": {
+      "main": [
+        [
+          {
+            "node": "Send Success Message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit an image": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Search files and folders2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Telegram - Error Report1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "90072cfbf8d623dcb87c54b50f9a97fbfeaf7ab1c89783586ee24fd8d57cc055"
+  }
+}
