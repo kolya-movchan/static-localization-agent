@@ -4,6 +4,7 @@ import path from 'path';
 import { config } from './config';
 import jobsRouter from './routes/jobs';
 import agentRouter from './routes/agent';
+import authRouter from './routes/auth';
 import { startWorker } from './jobs/worker';
 
 const app = express();
@@ -13,6 +14,7 @@ app.use(express.json({ limit: '10mb' }));
 
 app.use('/api/jobs', jobsRouter);
 app.use('/api/agent', agentRouter);
+app.use('/api/auth', authRouter);
 
 app.get('/api/health', (_req, res) => res.json({ ok: true }));
 

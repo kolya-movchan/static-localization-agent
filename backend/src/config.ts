@@ -14,18 +14,23 @@ export const config = {
   dbPath: process.env.DB_PATH ?? path.resolve(__dirname, "../../data/jobs.db"),
 
   gemini: {
-    apiKey: required("GEMINI_API_KEY"),
+    apiKey: required('GEMINI_API_KEY'),
     primaryModel: process.env.GEMINI_PRIMARY_MODEL ?? "gemini-2.0-flash-exp",
     fallbackModel: process.env.GEMINI_FALLBACK_MODEL ?? "gemini-1.5-flash",
     agentModel: process.env.GEMINI_AGENT_MODEL ?? "gemini-1.5-flash",
   },
 
   gdrive: {
-    serviceAccountPath: path.resolve(
-      __dirname,
-      "../..",
-      required("GOOGLE_SERVICE_ACCOUNT_PATH"),
-    ),
+    authMode: (process.env.GOOGLE_AUTH_MODE ?? 'oauth2') as 'oauth2' | 'service_account',
+    // OAuth2 (personal Drive)
+    oauthClientId: process.env.GOOGLE_OAUTH_CLIENT_ID ?? '',
+    oauthClientSecret: process.env.GOOGLE_OAUTH_CLIENT_SECRET ?? '',
+    oauthRedirectUri: process.env.GOOGLE_OAUTH_REDIRECT_URI ?? 'http://localhost:3001/api/auth/google/callback',
+    tokenPath: process.env.GOOGLE_TOKEN_PATH ?? path.resolve(__dirname, '../../data/.google-tokens.json'),
+    // Service account (Shared Drives / Google Workspace)
+    serviceAccountPath: process.env.GOOGLE_SERVICE_ACCOUNT_PATH
+      ? path.resolve(__dirname, '../..', process.env.GOOGLE_SERVICE_ACCOUNT_PATH)
+      : '',
   },
 
   worker: {
