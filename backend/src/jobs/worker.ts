@@ -22,6 +22,15 @@ function log(jobId: string, msg: string) {
   console.log(`[worker][${jobId.slice(0, 8)}] ${msg}`);
 }
 
+// If the filename contains _En_ (case-insensitive), replace it with the properly-cased locale:
+// e.g. "banner_En_9x16.png" + "UA" → "banner_Ua_9x16.png"
+// If the pattern is not found, the original filename is returned unchanged.
+function getLocalizedFilename(filename: string, language: string): string {
+  const langCased =
+    language.charAt(0).toUpperCase() + language.slice(1).toLowerCase();
+  return filename.replace(/_En_/i, `_${langCased}_`);
+}
+
 async function processItem(
   jobId: string,
   itemId: string,
@@ -57,10 +66,11 @@ async function processItem(
     const folder = await getOrCreateLocaleFolder(parentFolderId, language);
     log(jobId, `  Folder: ${folder.url}`);
 
-    log(jobId, `  Uploading ${imageName} to folder ${folder.id}...`);
+    const outputFilename = getLocalizedFilename(imageName, language);
+    log(jobId, `  Uploading "${outputFilename}" to folder ${folder.id}...`);
     const { id: outputFileId, url: outputFileUrl } = await uploadFile(
       localizedBuffer,
-      imageName,
+      outputFilename,
       imageMimeType,
       folder.id
     );
@@ -192,21 +202,23 @@ async function processJob(jobId: string): Promise<void> {
   }
 }
 
-let running = false;
+const activeJobs = new Set<string>();
 
 export function startWorker(): void {
-  console.log('[worker] Job worker started (poll interval: ' + config.worker.pollIntervalMs + 'ms)');
+  const { concurrency, pollIntervalMs } = config.worker;
+  console.log(`[worker] Started — concurrency: ${concurrency}, poll: ${pollIntervalMs}ms`);
 
-  setInterval(async () => {
-    if (running) return;
-    const [pending] = queries.getPendingJobs.all();
-    if (!pending) return;
+  setInterval(() => {
+    const slots = concurrency - activeJobs.size;
+    if (slots <= 0) return;
 
-    running = true;
-    try {
-      await processJob(pending.id);
-    } finally {
-      running = false;
+    const pending = queries.getPendingJobs.all(slots);
+    if (pending.length === 0) return;
+
+    for (const job of pending) {
+      if (activeJobs.has(job.id)) continue;
+      activeJobs.add(job.id);
+      processJob(job.id).finally(() => activeJobs.delete(job.id));
     }
-  }, config.worker.pollIntervalMs);
+  }, pollIntervalMs);
 }

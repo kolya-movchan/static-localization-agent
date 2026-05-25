@@ -143,8 +143,8 @@ export const queries = {
     SELECT * FROM job_items WHERE job_id = ? ORDER BY image_name, language
   `),
 
-  getPendingJobs: db.prepare<[], Job>(`
-    SELECT * FROM jobs WHERE status = 'pending' ORDER BY created_at ASC LIMIT 1
+  getPendingJobs: db.prepare<[number], Job>(`
+    SELECT * FROM jobs WHERE status = 'pending' ORDER BY created_at ASC LIMIT ?
   `),
 
   incrementProcessed: db.prepare<[string, string]>(`
