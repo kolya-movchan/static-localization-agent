@@ -170,14 +170,20 @@ async function processJob(jobId: string): Promise<void> {
       }
     }
 
-    // Process sequentially (rate-limited)
-    for (const item of items) {
-      await processItem(
-        jobId, item.id,
-        item.imageId, item.imageName, item.mimeType,
-        item.language, parentFolderId, comments
-      );
+    // Process items in parallel, up to itemConcurrency at a time
+    const { itemConcurrency } = config.worker;
+    let index = 0;
+    async function runSlot() {
+      while (index < items.length) {
+        const item = items[index++];
+        await processItem(
+          jobId, item.id,
+          item.imageId, item.imageName, item.mimeType,
+          item.language, parentFolderId, comments
+        );
+      }
     }
+    await Promise.all(Array.from({ length: Math.min(itemConcurrency, items.length) }, runSlot));
 
     const finalJob = queries.getJob.get(jobId)!;
     const successCount = finalJob.processed_images - finalJob.failed_images;

@@ -172,10 +172,10 @@ export async function downloadFile(fileId: string): Promise<Buffer> {
   return Buffer.from(res.data as ArrayBuffer);
 }
 
-export async function getOrCreateLocaleFolder(
-  parentFolderId: string,
-  language: string
-): Promise<{ id: string; url: string }> {
+// In-flight dedup: parallel jobs racing to create the same locale folder will share one promise
+const folderInFlight = new Map<string, Promise<string>>();
+
+async function resolveLocaleFolder(parentFolderId: string, language: string): Promise<string> {
   const drive = getDriveClient();
 
   const searchRes = await drive.files.list({
@@ -187,8 +187,7 @@ export async function getOrCreateLocaleFolder(
   });
 
   if (searchRes.data.files && searchRes.data.files.length > 0) {
-    const id = searchRes.data.files[0].id!;
-    return { id, url: `https://drive.google.com/drive/folders/${id}` };
+    return searchRes.data.files[0].id!;
   }
 
   const createRes = await drive.files.create({
@@ -201,7 +200,22 @@ export async function getOrCreateLocaleFolder(
     supportsAllDrives: true,
   });
 
-  const id = createRes.data.id!;
+  return createRes.data.id!;
+}
+
+export async function getOrCreateLocaleFolder(
+  parentFolderId: string,
+  language: string
+): Promise<{ id: string; url: string }> {
+  const key = `${parentFolderId}::${language}`;
+
+  let promise = folderInFlight.get(key);
+  if (!promise) {
+    promise = resolveLocaleFolder(parentFolderId, language).finally(() => folderInFlight.delete(key));
+    folderInFlight.set(key, promise);
+  }
+
+  const id = await promise;
   return { id, url: `https://drive.google.com/drive/folders/${id}` };
 }
 

@@ -35,8 +35,9 @@ export const config = {
 
   worker: {
     pollIntervalMs: parseInt(process.env.WORKER_POLL_INTERVAL_MS ?? "3000", 10),
-    rateLimitMs: parseInt(process.env.RATE_LIMIT_MS ?? "5000", 10),
+    rateLimitMs: parseInt(process.env.RATE_LIMIT_MS ?? "1000", 10),
     maxRetries: parseInt(process.env.MAX_RETRIES ?? "2", 10),
-    concurrency: parseInt(process.env.WORKER_CONCURRENCY ?? "1", 10),
+    concurrency: parseInt(process.env.WORKER_CONCURRENCY ?? "5", 10),
+    itemConcurrency: parseInt(process.env.ITEM_CONCURRENCY ?? "3", 10),
   },
 };
